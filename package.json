@@ -1,0 +1,20 @@
+{
+  "name": "woodid",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace @woodid/mobile",
+    "backend": "npm run dev --workspace @woodid/backend",
+    "build:backend": "npm run build --workspace @woodid/backend",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}
