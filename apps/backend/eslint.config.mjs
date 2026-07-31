@@ -13,6 +13,6 @@ export default tseslint.config(
   },
   prettierConfig,
   {
-    ignores: ['dist/**'],
+    ignores: ['dist/**', 'src/generated/**'],
   },
 );
