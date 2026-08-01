@@ -1,0 +1,15 @@
+node_modules/
+dist/
+src/generated/
+
+.env
+.env.local
+.env.*.local
+
+npm-debug.log*
+*.log
+
+.DS_Store
+.vscode/
+.idea/
+*.tsbuildinfo
