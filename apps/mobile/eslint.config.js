@@ -1,10 +1,12 @@
-const expoConfig = require('eslint-config-expo/flat');
+const { FlatCompat } = require('@eslint/eslintrc');
 const prettierConfig = require('eslint-config-prettier');
 
+const compat = new FlatCompat({ baseDirectory: __dirname });
+
 module.exports = [
-  ...expoConfig,
+  ...compat.extends('expo'),
   prettierConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/*', 'eslint.config.js'],
   },
 ];

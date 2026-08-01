@@ -2,6 +2,7 @@
   "name": "@woodid/backend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -13,9 +14,11 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "import:species": "tsx scripts/importSpecies.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "dotenv": "^16.4.7",

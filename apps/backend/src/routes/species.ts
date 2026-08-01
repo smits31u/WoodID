@@ -1,12 +1,18 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../db/client.js';
+import {
+  IdentificationError,
+  identifySpeciesFromImages,
+  parseImageInput,
+} from '../ai/identifySpecies.js';
 
 interface SpeciesIdParams {
   id: number;
 }
 
 interface IdentifyBody {
-  image: string;
+  image?: string;
+  images?: string[];
 }
 
 const idParamsSchema = {
@@ -17,17 +23,29 @@ const idParamsSchema = {
   },
 } as const;
 
+const BASE64_IMAGE_PATTERN = '^(data:image\\/[a-zA-Z0-9.+-]+;base64,)?[A-Za-z0-9+/]+={0,2}$';
+
 const identifyBodySchema = {
   type: 'object',
-  required: ['image'],
   additionalProperties: false,
   properties: {
     image: {
       type: 'string',
       minLength: 1,
-      pattern: '^(data:image\\/[a-zA-Z0-9.+-]+;base64,)?[A-Za-z0-9+/]+={0,2}$',
+      pattern: BASE64_IMAGE_PATTERN,
+    },
+    images: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 3,
+      items: {
+        type: 'string',
+        minLength: 1,
+        pattern: BASE64_IMAGE_PATTERN,
+      },
     },
   },
+  anyOf: [{ required: ['image'] }, { required: ['images'] }],
 } as const;
 
 const speciesRoutes: FastifyPluginAsync = async (fastify) => {
@@ -68,20 +86,52 @@ const speciesRoutes: FastifyPluginAsync = async (fastify) => {
     '/species/identify',
     { schema: { body: identifyBodySchema } },
     async (request, reply) => {
-      const allSpecies = await prisma.species.findMany();
+      const rawImages = request.body.images ?? (request.body.image ? [request.body.image] : []);
+      const parsedImages = rawImages.map(parseImageInput);
 
-      if (allSpecies.length === 0) {
-        return reply.code(503).send({
-          statusCode: 503,
-          error: 'Service Unavailable',
-          message: 'No species reference data is available to identify against.',
-        });
+      let identification;
+      try {
+        identification = await identifySpeciesFromImages(parsedImages);
+      } catch (error) {
+        if (error instanceof IdentificationError) {
+          request.log.error(error);
+          return reply.code(502).send({
+            statusCode: 502,
+            error: 'Bad Gateway',
+            message: error.message,
+          });
+        }
+        throw error;
       }
 
-      const match = allSpecies[Math.floor(Math.random() * allSpecies.length)];
-      const confidenceScore = Number((0.7 + Math.random() * 0.29).toFixed(2));
+      const identifiedName = identification.commonName.trim().toLowerCase();
+      const allSpecies = await prisma.species.findMany();
+      const match =
+        identifiedName.length > 0
+          ? allSpecies.find((species) => {
+              const dbName = species.commonName.trim().toLowerCase();
+              return (
+                dbName.length > 0 &&
+                (dbName.includes(identifiedName) || identifiedName.includes(dbName))
+              );
+            })
+          : undefined;
 
-      return { ...match, confidenceScore };
+      if (match) {
+        return {
+          ...match,
+          confidence: identification.confidence,
+          reasoning: identification.reasoning,
+        };
+      }
+
+      return {
+        commonName: identification.commonName,
+        scientificName: identification.scientificName,
+        confidence: identification.confidence,
+        reasoning: identification.reasoning,
+        noDbMatch: true,
+      };
     },
   );
 };

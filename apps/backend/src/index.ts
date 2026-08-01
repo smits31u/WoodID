@@ -3,6 +3,7 @@ import speciesRoutes from './routes/species.js';
 
 const server = Fastify({
   logger: true,
+  bodyLimit: 10 * 1024 * 1024, // 10mb
 });
 
 server.setErrorHandler((error: FastifyError, request, reply) => {

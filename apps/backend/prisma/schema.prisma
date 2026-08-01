@@ -18,7 +18,7 @@ model Species {
   updatedAt DateTime @updatedAt
 
   commonName     String
-  scientificName String
+  scientificName String @unique
   family         String
   originRegions  String
 

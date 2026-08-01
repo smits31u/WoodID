@@ -1,20 +1,46 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import HomeScreen from './src/screens/HomeScreen';
+import CameraScreen from './src/screens/CameraScreen';
+import ResultsScreen from './src/screens/ResultsScreen';
+import type { RootStackParamList } from './src/navigation/types';
+import { colors } from './src/theme/colors';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.background,
+    card: colors.backgroundElevated,
+    text: colors.textPrimary,
+    border: colors.border,
+    primary: colors.accent,
+  },
+};
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>WoodID</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen
+            name="Camera"
+            component={CameraScreen}
+            options={{ presentation: 'fullScreenModal' }}
+          />
+          <Stack.Screen name="Results" component={ResultsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
