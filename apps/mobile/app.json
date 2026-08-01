@@ -16,7 +16,9 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": ["android.permission.CAMERA"],
+      "package": "com.smits31u.woodid"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,7 +31,20 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "236904cc-cd5f-443e-95ed-cdebbfb2a343"
+      }
+    }
   }
 }
