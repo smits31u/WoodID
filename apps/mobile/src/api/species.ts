@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.0.126:3000';
+import { API_BASE_URL } from '../constants/api';
 
 export interface IdentifyResult {
   commonName?: string;
