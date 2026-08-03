@@ -25,12 +25,16 @@ const TIMBER_FAMILIES: Record<string, string> = {
   Moraceae: 'Q156579',
   Meliaceae: 'Q158979',
   Juglandaceae: 'Q216944',
+  Myrtaceae: 'Q156563',
+  Salicaceae: 'Q158487',
+  Ebenaceae: 'Q156669',
+  Dipterocarpaceae: 'Q580593',
+  Anacardiaceae: 'Q156589',
+  Malvaceae: 'Q156551',
+  Proteaceae: 'Q157228',
 };
 
-const PER_FAMILY_LIMIT = 18;
-const DENSITY_KG_M3_TO_G_CM3 = 1000;
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const PER_FAMILY_LIMIT = 30;
 
 interface WikidataCandidate {
   commonName: string;
