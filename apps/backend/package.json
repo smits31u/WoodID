@@ -15,10 +15,14 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "import:species": "tsx scripts/importSpecies.ts"
+    "import:species": "tsx scripts/importSpecies.ts",
+    "import:cites-species": "tsx scripts/importCitesSpecies.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/multipart": "^10.1.0",
+    "@fastify/static": "^10.1.2",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "dotenv": "^16.4.7",

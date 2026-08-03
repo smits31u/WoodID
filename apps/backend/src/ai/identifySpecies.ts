@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic, { APIError } from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -26,7 +26,7 @@ export class IdentificationError extends Error {}
 
 export type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
 
-const SUPPORTED_MEDIA_TYPES: readonly string[] = [
+export const SUPPORTED_MEDIA_TYPES: readonly string[] = [
   'image/jpeg',
   'image/png',
   'image/gif',
@@ -96,7 +96,15 @@ export async function identifySpeciesFromImages(
       ],
     });
   } catch (error) {
-    throw new IdentificationError('Could not reach the AI identification service.', {
+    if (error instanceof APIError) {
+      const detail = `${error.type ?? error.name} (status ${error.status ?? 'unknown'}): ${error.message}`;
+      console.error('[identifySpecies] Anthropic API error:', detail);
+      throw new IdentificationError(`AI identification service error: ${detail}`, { cause: error });
+    }
+
+    const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.error('[identifySpecies] Unexpected error calling Anthropic API:', detail);
+    throw new IdentificationError(`Could not reach the AI identification service (${detail}).`, {
       cause: error,
     });
   }
@@ -125,4 +133,67 @@ export async function identifySpeciesFromImages(
   }
 
   return parsed;
+}
+
+const IS_WOOD_PROMPT =
+  'Look at this image. Is it a photo of a wood surface (grain, boards, cut end, etc.)? ' +
+  'Return ONLY a JSON object with one field: isWood (boolean). Do not include any other text.';
+
+function isWoodResult(value: unknown): value is { isWood: boolean } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).isWood === 'boolean'
+  );
+}
+
+/**
+ * A transient failure (network error, unparseable response) returns 'unknown' rather than
+ * throwing, so callers can leave the submission pending for a human instead of wrongly
+ * auto-rejecting it — only an explicit 'no' from Claude should auto-reject.
+ */
+export async function isWoodPhoto(image: ParsedImage): Promise<'yes' | 'no' | 'unknown'> {
+  let message;
+  try {
+    message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 64,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: image.mediaType, data: image.base64Data },
+            },
+            { type: 'text', text: IS_WOOD_PROMPT },
+          ],
+        },
+      ],
+    });
+  } catch (error) {
+    console.warn('[isWoodPhoto] Anthropic API request failed:', error);
+    return 'unknown';
+  }
+
+  const textBlock = message.content.find((block) => block.type === 'text');
+  if (!textBlock) {
+    console.warn('[isWoodPhoto] Claude returned no text response.');
+    return 'unknown';
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stripMarkdownCodeFence(textBlock.text));
+  } catch {
+    console.warn('[isWoodPhoto] Claude returned unparseable JSON:', textBlock.text);
+    return 'unknown';
+  }
+
+  if (!isWoodResult(parsed)) {
+    console.warn('[isWoodPhoto] Claude returned JSON in an unexpected shape:', textBlock.text);
+    return 'unknown';
+  }
+
+  return parsed.isWood ? 'yes' : 'no';
 }

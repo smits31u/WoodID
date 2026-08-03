@@ -1,11 +1,16 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
+import { getReferencePhotos, type ReferencePhoto } from '../api/species';
+import { API_BASE_URL } from '../constants/api';
 import { colors, getStatusColor } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Results'>;
+
+const LOW_CONFIDENCE_THRESHOLD = 0.5;
 
 export default function ResultsScreen({ route, navigation }: Props) {
   const { result } = route.params;
@@ -13,6 +18,18 @@ export default function ResultsScreen({ route, navigation }: Props) {
   const confidencePercent = Math.round(result.confidence * 100);
   const jankaHardnessLabel =
     result.jankaHardness != null ? `${result.jankaHardness} lbf` : 'Unknown';
+  const showSuggestPrompt = result.noDbMatch || result.confidence < LOW_CONFIDENCE_THRESHOLD;
+
+  const [galleryPhotos, setGalleryPhotos] = useState<ReferencePhoto[]>([]);
+
+  useEffect(() => {
+    if (result.id == null) {
+      return;
+    }
+    getReferencePhotos(result.id)
+      .then(setGalleryPhotos)
+      .catch(() => setGalleryPhotos([]));
+  }, [result.id]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -46,6 +63,38 @@ export default function ResultsScreen({ route, navigation }: Props) {
           <View style={styles.reasoningBox}>
             <Text style={styles.reasoningLabel}>Why this identification</Text>
             <Text style={styles.reasoningText}>{result.reasoning}</Text>
+          </View>
+        )}
+
+        {galleryPhotos.length > 0 && (
+          <View style={styles.galleryBox}>
+            <Text style={styles.reasoningLabel}>From the community</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryRow}>
+              {galleryPhotos.map((photo) => (
+                <Image
+                  key={photo.id}
+                  source={{ uri: `${API_BASE_URL}${photo.imageUrl}` }}
+                  style={styles.galleryImage}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {showSuggestPrompt && (
+          <View style={styles.suggestBox}>
+            <Text style={styles.reasoningText}>Not quite right?</Text>
+            <Pressable
+              style={styles.suggestButton}
+              onPress={() =>
+                navigation.navigate('SuggestSpecies', {
+                  prefillCommonName: result.commonName,
+                  prefillScientificName: result.scientificName,
+                })
+              }
+            >
+              <Text style={styles.suggestButtonText}>Suggest a new species</Text>
+            </Pressable>
           </View>
         )}
 
@@ -136,6 +185,35 @@ const styles = StyleSheet.create({
   reasoningText: {
     ...typography.body,
     color: colors.textSecondary,
+  },
+  galleryBox: {
+    marginTop: spacing.lg,
+  },
+  galleryRow: {
+    marginTop: spacing.xs,
+  },
+  galleryImage: {
+    width: 96,
+    height: 96,
+    borderRadius: radii.md,
+    marginRight: spacing.sm,
+  },
+  suggestBox: {
+    marginTop: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  suggestButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.accentMuted,
+  },
+  suggestButtonText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.accent,
   },
   statRow: {
     flexDirection: 'row',

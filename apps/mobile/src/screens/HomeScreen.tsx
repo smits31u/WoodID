@@ -33,6 +33,15 @@ export default function HomeScreen({ navigation }: Props) {
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>Works best in good light, close to the grain</Text>
+        <View style={styles.contributeRow}>
+          <Pressable onPress={() => navigation.navigate('ContributePhoto')} hitSlop={8}>
+            <Text style={styles.contributeLink}>Contribute a photo</Text>
+          </Pressable>
+          <Text style={styles.contributeDivider}>·</Text>
+          <Pressable onPress={() => navigation.navigate('SuggestSpecies')} hitSlop={8}>
+            <Text style={styles.contributeLink}>Suggest a species</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -113,5 +122,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+  contributeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  contributeLink: {
+    ...typography.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  contributeDivider: {
+    color: colors.textMuted,
   },
 });

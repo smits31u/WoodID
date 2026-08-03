@@ -38,4 +38,54 @@ model Species {
   commonUses           String
   sustainabilityStatus String
   citesListed          Boolean
+
+  referencePhotos ReferencePhoto[]
+}
+
+enum PhotoAngle {
+  FACE_GRAIN
+  EDGE_GRAIN
+  END_GRAIN
+}
+
+enum ContentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ReferencePhoto {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  speciesId Int
+  species   Species @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+
+  imageUrl String
+  angle    PhotoAngle
+  status   ContentStatus @default(PENDING)
+  deviceId String
+}
+
+model SpeciesSuggestion {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  proposedCommonName     String
+  proposedScientificName String?
+  submitterNotes         String?
+  deviceId               String
+  status                 ContentStatus @default(PENDING)
+
+  photos SuggestionPhoto[]
+}
+
+model SuggestionPhoto {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  suggestionId Int
+  suggestion   SpeciesSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  imageUrl String
 }
