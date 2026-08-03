@@ -16,7 +16,11 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "import:species": "tsx scripts/importSpecies.ts",
-    "import:cites-species": "tsx scripts/importCitesSpecies.ts"
+    "import:cites-species": "tsx scripts/importCitesSpecies.ts",
+    "import:north-american-species": "tsx scripts/addNorthAmericanSpecies.ts",
+    "import:misc-species": "tsx scripts/addMiscSpecies.ts",
+    "cleanup:junk-species": "tsx scripts/cleanupJunkSpecies.ts",
+    "restore:jackalberry": "tsx scripts/restoreJackalberry.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
