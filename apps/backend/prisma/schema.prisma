@@ -39,6 +39,14 @@ model Species {
   sustainabilityStatus String
   citesListed          Boolean
 
+  // Populated for species enriched from an external reference collection (e.g. SmartWoodID /
+  // Tervuren Wood Collection) — null for species sourced from the AI wood-properties pipeline.
+  attribution          String?
+  vesselPattern        String?
+  growthRingVisibility String?
+  rayVisibility        String?
+  endGrainImageUrl     String?
+
   referencePhotos ReferencePhoto[]
 }
 

@@ -6,6 +6,7 @@ import CameraScreen from './src/screens/CameraScreen';
 import ResultsScreen from './src/screens/ResultsScreen';
 import ContributePhotoScreen from './src/screens/ContributePhotoScreen';
 import SuggestSpeciesScreen from './src/screens/SuggestSpeciesScreen';
+import AboutScreen from './src/screens/AboutScreen';
 import type { RootStackParamList } from './src/navigation/types';
 import { colors } from './src/theme/colors';
 
@@ -43,6 +44,7 @@ export default function App() {
           <Stack.Screen name="Results" component={ResultsScreen} />
           <Stack.Screen name="ContributePhoto" component={ContributePhotoScreen} />
           <Stack.Screen name="SuggestSpecies" component={SuggestSpeciesScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

@@ -42,6 +42,9 @@ export default function HomeScreen({ navigation }: Props) {
             <Text style={styles.contributeLink}>Suggest a species</Text>
           </Pressable>
         </View>
+        <Pressable onPress={() => navigation.navigate('About')} hitSlop={8}>
+          <Text style={styles.aboutLink}>About / Data Sources</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -138,5 +141,12 @@ const styles = StyleSheet.create({
   },
   contributeDivider: {
     color: colors.textMuted,
+  },
+  aboutLink: {
+    ...typography.body,
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.md,
   },
 });
