@@ -20,7 +20,8 @@
     "import:north-american-species": "tsx scripts/addNorthAmericanSpecies.ts",
     "import:misc-species": "tsx scripts/addMiscSpecies.ts",
     "cleanup:junk-species": "tsx scripts/cleanupJunkSpecies.ts",
-    "restore:jackalberry": "tsx scripts/restoreJackalberry.ts"
+    "restore:jackalberry": "tsx scripts/restoreJackalberry.ts",
+    "import:twdd": "tsx scripts/importTWDD.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
@@ -30,6 +31,7 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "fastify": "^5.11.0"
   },
   "devDependencies": {
