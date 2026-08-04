@@ -88,7 +88,7 @@ interface PlaceholderEnrichment {
   jankaHardness: number;
   grainType: string;
   texture: string;
-  workabilityRating: number;
+  workabilityRating: number | null;
   workabilityNotes: string;
   commonUses: string;
   heartwood: string;
@@ -100,15 +100,25 @@ function stripMarkdownCodeFence(text: string): string {
   return fenceMatch ? fenceMatch[1] : text;
 }
 
+/**
+ * jankaHardness/workabilityRating are nullable: for genuinely obscure species Claude correctly
+ * returns null for these rather than inventing a precise number it doesn't know (verified by
+ * hand against several failed species — e.g. "Limited published data on workability
+ * characteristics for this species" alongside jankaHardness: null). The original validator
+ * required both to be numbers and discarded the whole response — including perfectly good
+ * commonName/grainType/texture/colors/uses — whenever either was null, which was the cause of
+ * most of the first run's failures. Null is now accepted and written through as 0 (the existing
+ * placeholder value), so the rest of the response still gets saved.
+ */
 function isPlaceholderEnrichment(value: unknown): value is PlaceholderEnrichment {
   if (typeof value !== 'object' || value === null) return false;
   const c = value as Record<string, unknown>;
   return (
     typeof c.commonName === 'string' &&
-    typeof c.jankaHardness === 'number' &&
+    (typeof c.jankaHardness === 'number' || c.jankaHardness === null) &&
     typeof c.grainType === 'string' &&
     typeof c.texture === 'string' &&
-    typeof c.workabilityRating === 'number' &&
+    (typeof c.workabilityRating === 'number' || c.workabilityRating === null) &&
     typeof c.workabilityNotes === 'string' &&
     typeof c.commonUses === 'string' &&
     typeof c.heartwood === 'string' &&
@@ -129,10 +139,14 @@ async function fetchPlaceholderEnrichment(
     `For the wood species with scientific name ${scientificName}, provide accurate wood ` +
     'properties as JSON only: commonName (the most widely used English common/trade name; if ' +
     `none is well established, return "${scientificName}" unchanged), jankaHardness (integer ` +
-    'lbf), grainType (one of: Straight, Interlocked, Wavy, Irregular), texture (one of: Fine, ' +
-    'Medium, Coarse), workabilityRating (1-5 where 5 is easiest), workabilityNotes (one ' +
-    'sentence), commonUses (comma separated list), heartwood (color description), sapwood ' +
-    '(color description). Return only valid JSON.';
+    'lbf, or null if not confidently known), grainType (one of: Straight, Interlocked, Wavy, ' +
+    'Irregular), texture (one of: Fine, Medium, Coarse), workabilityRating (1-5 where 5 is ' +
+    'easiest, or null if not confidently known), workabilityNotes (one sentence — it is fine to ' +
+    'say data is limited), commonUses (comma separated list), heartwood (color description), ' +
+    'sapwood (color description). If you have genuine general knowledge of this species or its ' +
+    'genus, return the JSON with null only for the specific numeric fields you are unsure of. ' +
+    'If you have no reliable information at all, it is fine to decline in plain text instead of ' +
+    'JSON rather than inventing details.';
 
   let message;
   try {
@@ -215,12 +229,13 @@ async function main() {
         where: { id: species.id },
         data: {
           commonName: enrichment.commonName,
-          jankaHardness: Math.round(enrichment.jankaHardness),
+          jankaHardness: enrichment.jankaHardness == null ? 0 : Math.round(enrichment.jankaHardness),
           grainType: enrichment.grainType,
           texture: enrichment.texture,
           heartwoodColor: enrichment.heartwood,
           sapwoodColor: enrichment.sapwood,
-          workabilityRating: Math.round(enrichment.workabilityRating),
+          workabilityRating:
+            enrichment.workabilityRating == null ? 0 : Math.round(enrichment.workabilityRating),
           workabilityNotes: enrichment.workabilityNotes,
           commonUses: enrichment.commonUses,
           sustainabilityStatus: cites.sustainabilityStatus,
