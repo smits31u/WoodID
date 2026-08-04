@@ -66,6 +66,13 @@ export default function ResultsScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {result.endGrainImageUrl && (
+          <View style={styles.galleryBox}>
+            <Text style={styles.reasoningLabel}>Reference end grain</Text>
+            <Image source={{ uri: result.endGrainImageUrl }} style={styles.referenceImage} />
+          </View>
+        )}
+
         {galleryPhotos.length > 0 && (
           <View style={styles.galleryBox}>
             <Text style={styles.reasoningLabel}>From the community</Text>
@@ -197,6 +204,12 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: radii.md,
     marginRight: spacing.sm,
+  },
+  referenceImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: radii.md,
+    marginTop: spacing.xs,
   },
   suggestBox: {
     marginTop: spacing.lg,

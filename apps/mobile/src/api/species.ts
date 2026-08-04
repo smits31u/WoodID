@@ -10,6 +10,10 @@ export interface IdentifyResult {
   confidence: number;
   reasoning?: string;
   noDbMatch?: boolean;
+  // Canonical end-grain reference photo for the matched species (e.g. from a reference wood
+  // collection) — distinct from the crowd-sourced ReferencePhoto gallery. Absolute URL, unlike
+  // ReferencePhoto.imageUrl which is server-relative. Not populated for any species yet.
+  endGrainImageUrl?: string;
 }
 
 export interface SpeciesSummary {

@@ -3,24 +3,51 @@ import Anthropic, { APIError } from '@anthropic-ai/sdk';
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const IDENTIFY_PROMPT =
-  'You are a wood species identification expert. Analyze this wood grain image carefully. ' +
-  'Look at the grain pattern, pore structure, color, and texture. Return ONLY a JSON object ' +
-  'with these fields: commonName (string, the most likely wood species common name), ' +
-  'scientificName (string), confidence (number between 0 and 1), reasoning (string, 2-3 ' +
-  'sentences explaining what visual features led to this identification). Do not include ' +
-  'any other text.';
+  'You are a wood species identification expert applying IAWA (International Association of ' +
+  'Wood Anatomists) macroscopic description conventions. Examine this wood image and assess, ' +
+  'as far as the photo allows: vessel arrangement/porosity (e.g. diffuse-porous, ring-porous, ' +
+  'semi-ring-porous), vessel grouping (solitary, radial multiples, clusters) and relative vessel ' +
+  'frequency/diameter, ray visibility and spacing on end grain if visible, axial parenchyma ' +
+  'pattern (banded, diffuse, paratracheal, absent/not visible), growth ring visibility and ' +
+  'distinctness, heartwood/sapwood color and luster, and grain pattern (straight, interlocked, ' +
+  'wavy, figured). Use these anatomical features, not just overall color and texture, as the ' +
+  'basis for your identification. Return ONLY a JSON object with these fields: commonName ' +
+  '(string, the most likely wood species common name), scientificName (string), confidence ' +
+  '(number between 0 and 1), reasoning (string, 2-3 sentences explaining what visual features ' +
+  'led to this identification), vesselPattern (string, porosity + grouping observed, or "not ' +
+  'visible" if the photo does not show end grain clearly), rayVisibility (string, or "not ' +
+  'visible"), growthRingVisibility (string, or "not visible"), vesselGrouping (string), ' +
+  'parenchymaPattern (string, or "not visible"), colorAndLuster (string), grainPattern (string), ' +
+  'estimatedDensityCategory (one of "light", "medium", "heavy" — your best visual estimate of ' +
+  'relative wood density from pore density, ray prominence, and color depth; coarse open pores ' +
+  'and pale color typically indicate lighter wood, fine dense pores/rays and dark saturated ' +
+  'color typically indicate heavier wood). Do not include any other text.';
 
 const MULTI_ANGLE_CONTEXT =
   'You are analyzing multiple angles of the same wood sample. Image 1 is face grain, Image 2 ' +
   'is edge grain, Image 3 is end grain (if provided). Use all available angles to make your ' +
   'identification.';
 
+export type DensityCategory = 'light' | 'medium' | 'heavy';
+
 export interface ClaudeIdentification {
   commonName: string;
   scientificName: string;
   confidence: number;
   reasoning: string;
+  // IAWA-style macroscopic observations. Optional: older callers/tests and any response Claude
+  // fails to fully populate should still validate on the four fields above.
+  vesselPattern?: string;
+  rayVisibility?: string;
+  growthRingVisibility?: string;
+  vesselGrouping?: string;
+  parenchymaPattern?: string;
+  colorAndLuster?: string;
+  grainPattern?: string;
+  estimatedDensityCategory?: DensityCategory;
 }
+
+const DENSITY_CATEGORIES: readonly DensityCategory[] = ['light', 'medium', 'heavy'];
 
 export class IdentificationError extends Error {}
 
@@ -62,13 +89,25 @@ function isClaudeIdentification(value: unknown): value is ClaudeIdentification {
     return false;
   }
   const candidate = value as Record<string, unknown>;
+  const optionalStringOk = (key: keyof ClaudeIdentification) =>
+    candidate[key] === undefined || typeof candidate[key] === 'string';
+
   return (
     typeof candidate.commonName === 'string' &&
     typeof candidate.scientificName === 'string' &&
     typeof candidate.confidence === 'number' &&
     candidate.confidence >= 0 &&
     candidate.confidence <= 1 &&
-    typeof candidate.reasoning === 'string'
+    typeof candidate.reasoning === 'string' &&
+    optionalStringOk('vesselPattern') &&
+    optionalStringOk('rayVisibility') &&
+    optionalStringOk('growthRingVisibility') &&
+    optionalStringOk('vesselGrouping') &&
+    optionalStringOk('parenchymaPattern') &&
+    optionalStringOk('colorAndLuster') &&
+    optionalStringOk('grainPattern') &&
+    (candidate.estimatedDensityCategory === undefined ||
+      DENSITY_CATEGORIES.includes(candidate.estimatedDensityCategory as DensityCategory))
   );
 }
 
@@ -87,7 +126,7 @@ export async function identifySpeciesFromImages(
   try {
     message = await anthropic.messages.create({
       model: 'claude-opus-4-5',
-      max_tokens: 1024,
+      max_tokens: 1536,
       messages: [
         {
           role: 'user',
