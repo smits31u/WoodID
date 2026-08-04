@@ -40,12 +40,23 @@ model Species {
   citesListed          Boolean
 
   // Populated for species enriched from an external reference collection (e.g. SmartWoodID /
-  // Tervuren Wood Collection) — null for species sourced from the AI wood-properties pipeline.
+  // Tervuren Wood Collection, or the USDA Wood Handbook) — null for species sourced only from
+  // the AI wood-properties pipeline.
   attribution          String?
   vesselPattern        String?
   growthRingVisibility String?
   rayVisibility        String?
   endGrainImageUrl     String?
+
+  // USDA Forest Products Laboratory Wood Handbook (FPL-GTR-282) mechanical/physical properties.
+  modulusOfRupture            Int? // psi, static bending, 12% MC
+  modulusOfElasticity         Int? // psi, static bending, 12% MC
+  compressionStrengthParallel Int? // psi, parallel to grain, 12% MC
+  shrinkageRadial             Float? // %, green to ovendry
+  shrinkageTangential         Float? // %, green to ovendry
+  shrinkageVolumetric         Float? // %, green to ovendry
+  decayResistance             String? // Wood Handbook Table 14-1 category
+  dryingDifficulty            String? // not populated — no per-species rating in FPL-GTR-282
 
   referencePhotos ReferencePhoto[]
 }
