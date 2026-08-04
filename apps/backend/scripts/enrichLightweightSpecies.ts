@@ -141,12 +141,9 @@ async function fetchPlaceholderEnrichment(
     `none is well established, return "${scientificName}" unchanged), jankaHardness (integer ` +
     'lbf, or null if not confidently known), grainType (one of: Straight, Interlocked, Wavy, ' +
     'Irregular), texture (one of: Fine, Medium, Coarse), workabilityRating (1-5 where 5 is ' +
-    'easiest, or null if not confidently known), workabilityNotes (one sentence — it is fine to ' +
-    'say data is limited), commonUses (comma separated list), heartwood (color description), ' +
-    'sapwood (color description). If you have genuine general knowledge of this species or its ' +
-    'genus, return the JSON with null only for the specific numeric fields you are unsure of. ' +
-    'If you have no reliable information at all, it is fine to decline in plain text instead of ' +
-    'JSON rather than inventing details.';
+    'easiest, or null if not confidently known), workabilityNotes (one sentence), commonUses ' +
+    '(comma separated list), heartwood (color description), sapwood (color description). ' +
+    'Return only valid JSON.';
 
   let message;
   try {
