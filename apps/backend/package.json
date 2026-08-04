@@ -21,7 +21,8 @@
     "import:misc-species": "tsx scripts/addMiscSpecies.ts",
     "cleanup:junk-species": "tsx scripts/cleanupJunkSpecies.ts",
     "restore:jackalberry": "tsx scripts/restoreJackalberry.ts",
-    "import:twdd": "tsx scripts/importTWDD.ts"
+    "import:twdd": "tsx scripts/importTWDD.ts",
+    "enrich:lightweight-species": "tsx scripts/enrichLightweightSpecies.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
