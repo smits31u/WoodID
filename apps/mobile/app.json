@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Grainscope",
-    "slug": "grainscope",
+    "slug": "woodid",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -43,6 +43,8 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
           "backgroundColor": "#18110D",
           "resizeMode": "contain"
         }
