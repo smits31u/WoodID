@@ -1,22 +1,76 @@
+import { useCallback, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
+import { getQueue, markViewed, type QueueItem } from '../lib/offlineQueue';
 import { colors } from '../theme/colors';
-import { spacing, typography } from '../theme/spacing';
+import { radii, spacing, typography } from '../theme/spacing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      getQueue().then(setQueue);
+    }, []),
+  );
+
+  const readyItem = queue.find((item) => item.status === 'done');
+  const pendingCount = queue.filter(
+    (item) => item.status === 'pending' || item.status === 'submitting',
+  ).length;
+  const failedItems = queue.filter((item) => item.status === 'failed');
+
+  const handleOpenReady = () => {
+    if (!readyItem?.result) {
+      return;
+    }
+    markViewed(readyItem.id).then(() => setQueue((q) => q.filter((i) => i.id !== readyItem.id)));
+    navigation.navigate('Results', { result: readyItem.result, photos: readyItem.photos });
+  };
+
+  const handleDismissFailed = () => {
+    Promise.all(failedItems.map((item) => markViewed(item.id))).then(() =>
+      setQueue((q) => q.filter((item) => item.status !== 'failed')),
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
 
       <View style={styles.header}>
-        <Text style={styles.brand}>WoodID</Text>
+        <Text style={styles.brand}>Grainscope</Text>
         <Text style={styles.tagline}>Point. Snap. Identify.</Text>
       </View>
+
+      {readyItem && (
+        <Pressable style={styles.queueBanner} onPress={handleOpenReady}>
+          <Text style={styles.queueBannerText}>
+            {readyItem.result?.commonName ?? 'A queued photo'} identified — tap to view
+          </Text>
+        </Pressable>
+      )}
+      {!readyItem && pendingCount > 0 && (
+        <View style={styles.queueBannerMuted}>
+          <Text style={styles.queueBannerMutedText}>
+            {pendingCount} photo{pendingCount === 1 ? '' : 's'} waiting to submit
+          </Text>
+        </View>
+      )}
+      {!readyItem && failedItems.length > 0 && (
+        <Pressable style={styles.queueBannerMuted} onPress={handleDismissFailed}>
+          <Text style={styles.queueBannerMutedText}>
+            {failedItems.length} submission{failedItems.length === 1 ? '' : 's'} couldn't complete
+            — tap to dismiss
+          </Text>
+        </Pressable>
+      )}
 
       <View style={styles.center}>
         <Pressable
@@ -72,6 +126,35 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  queueBanner: {
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.lg,
+    backgroundColor: `${colors.accent}22`,
+    borderRadius: radii.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  queueBannerText: {
+    ...typography.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+    textAlign: 'center',
+  },
+  queueBannerMuted: {
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.lg,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  queueBannerMutedText: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   center: {
     alignItems: 'center',

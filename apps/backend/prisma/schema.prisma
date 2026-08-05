@@ -39,6 +39,12 @@ model Species {
   sustainabilityStatus String
   citesListed          Boolean
 
+  // Set once a backfill script has confirmed there's no real common/trade name (commonName is
+  // left equal to scientificName) or no documented Janka hardness (jankaHardness left at 0), so
+  // future backfill runs don't keep re-asking Claude about species with genuinely no data.
+  hasNoCommonName Boolean @default(false)
+  hasNoJankaData  Boolean @default(false)
+
   // Populated for species enriched from an external reference collection (e.g. SmartWoodID /
   // Tervuren Wood Collection, or the USDA Wood Handbook) — null for species sourced only from
   // the AI wood-properties pipeline.

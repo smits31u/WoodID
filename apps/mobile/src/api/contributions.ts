@@ -16,7 +16,7 @@ async function postMultipart(path: string, formData: FormData): Promise<Response
     response = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', body: formData });
   } catch {
     throw new ContributionError(
-      'Could not reach the WoodID server. Check your connection and try again.',
+      'Could not reach the Grainscope server. Check your connection and try again.',
     );
   }
 

@@ -36,7 +36,25 @@ export interface ReferencePhoto {
   createdAt: string;
 }
 
-export class IdentifyError extends Error {}
+/**
+ * 'NETWORK_ERROR' is determined client-side (the fetch itself threw). The others are read from
+ * the server's `code` field; 'SERVER_ERROR' is the fallback for a non-OK response with no
+ * recognized code (e.g. Fastify's own validation error responses, which predate this field).
+ */
+export type IdentifyErrorCode =
+  | 'NETWORK_ERROR'
+  | 'IMAGE_QUALITY_REJECTED'
+  | 'AI_SERVICE_ERROR'
+  | 'SERVER_ERROR';
+
+export class IdentifyError extends Error {
+  readonly code: IdentifyErrorCode;
+
+  constructor(message: string, code: IdentifyErrorCode) {
+    super(message);
+    this.code = code;
+  }
+}
 export class SpeciesFetchError extends Error {}
 
 export async function identifySpecies(base64Images: string[]): Promise<IdentifyResult> {
@@ -49,13 +67,18 @@ export async function identifySpecies(base64Images: string[]): Promise<IdentifyR
     });
   } catch {
     throw new IdentifyError(
-      'Could not reach the WoodID server. Check your connection and try again.',
+      'Could not reach the Grainscope server. Check your connection and try again.',
+      'NETWORK_ERROR',
     );
   }
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new IdentifyError(body?.message ?? 'Something went wrong identifying this photo.');
+    const code: IdentifyErrorCode =
+      body?.code === 'IMAGE_QUALITY_REJECTED' || body?.code === 'AI_SERVICE_ERROR'
+        ? body.code
+        : 'SERVER_ERROR';
+    throw new IdentifyError(body?.message ?? 'Something went wrong identifying this photo.', code);
   }
 
   return response.json();
@@ -67,7 +90,7 @@ export async function listSpecies(): Promise<SpeciesSummary[]> {
     response = await fetch(`${API_BASE_URL}/species`);
   } catch {
     throw new SpeciesFetchError(
-      'Could not reach the WoodID server. Check your connection and try again.',
+      'Could not reach the Grainscope server. Check your connection and try again.',
     );
   }
 
@@ -84,7 +107,7 @@ export async function getReferencePhotos(speciesId: number): Promise<ReferencePh
     response = await fetch(`${API_BASE_URL}/species/${speciesId}/reference-photos?status=APPROVED`);
   } catch {
     throw new SpeciesFetchError(
-      'Could not reach the WoodID server. Check your connection and try again.',
+      'Could not reach the Grainscope server. Check your connection and try again.',
     );
   }
 

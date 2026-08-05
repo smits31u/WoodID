@@ -10,15 +10,24 @@ import { radii, spacing, typography } from '../theme/spacing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Results'>;
 
+// Drives the "suggest a new species" prompt — distinct from ADD_ANGLE_CONFIDENCE_THRESHOLD below,
+// which drives the "add another angle" prompt. Both can show at once for a very low-confidence
+// result; they address different actions (report a possible gap in the catalog vs. improve the
+// evidence for this specific identification).
 const LOW_CONFIDENCE_THRESHOLD = 0.5;
 
+// Below this, the result is shown with a "Low confidence" indicator and a prompt to add another
+// angle photo and resubmit. Named constant so it's easy to tune later.
+const ADD_ANGLE_CONFIDENCE_THRESHOLD = 0.7;
+
 export default function ResultsScreen({ route, navigation }: Props) {
-  const { result } = route.params;
+  const { result, photos } = route.params;
   const statusColor = getStatusColor(result.sustainabilityStatus);
   const confidencePercent = Math.round(result.confidence * 100);
   const jankaHardnessLabel =
     result.jankaHardness != null ? `${result.jankaHardness} lbf` : 'Unknown';
   const showSuggestPrompt = result.noDbMatch || result.confidence < LOW_CONFIDENCE_THRESHOLD;
+  const isLowConfidence = result.confidence < ADD_ANGLE_CONFIDENCE_THRESHOLD;
 
   const [galleryPhotos, setGalleryPhotos] = useState<ReferencePhoto[]>([]);
 
@@ -37,6 +46,11 @@ export default function ResultsScreen({ route, navigation }: Props) {
         <View style={styles.confidenceRow}>
           <View style={[styles.confidenceDot, { backgroundColor: colors.accent }]} />
           <Text style={styles.confidenceText}>{confidencePercent}% match</Text>
+          {isLowConfidence && (
+            <View style={styles.lowConfidenceBadge}>
+              <Text style={styles.lowConfidenceBadgeText}>Low confidence</Text>
+            </View>
+          )}
         </View>
 
         <Text style={styles.commonName}>{result.commonName ?? 'Unknown species'}</Text>
@@ -63,6 +77,20 @@ export default function ResultsScreen({ route, navigation }: Props) {
           <View style={styles.reasoningBox}>
             <Text style={styles.reasoningLabel}>Why this identification</Text>
             <Text style={styles.reasoningText}>{result.reasoning}</Text>
+          </View>
+        )}
+
+        {isLowConfidence && (
+          <View style={styles.boostBox}>
+            <Text style={styles.reasoningText}>
+              Not sure this looks right? Add another angle photo to improve accuracy.
+            </Text>
+            <Pressable
+              style={styles.suggestButton}
+              onPress={() => navigation.replace('Camera', { existingPhotos: photos })}
+            >
+              <Text style={styles.suggestButtonText}>Add another photo</Text>
+            </Pressable>
           </View>
         )}
 
@@ -160,6 +188,25 @@ const styles = StyleSheet.create({
   confidenceText: {
     ...typography.label,
     color: colors.accent,
+  },
+  lowConfidenceBadge: {
+    paddingVertical: spacing.xs / 2,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: `${colors.warning}22`,
+  },
+  lowConfidenceBadgeText: {
+    ...typography.label,
+    color: colors.warning,
+    letterSpacing: 0.6,
+  },
+  boostBox: {
+    marginTop: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
   },
   commonName: {
     ...typography.display,

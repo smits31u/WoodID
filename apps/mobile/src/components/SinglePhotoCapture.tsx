@@ -103,7 +103,7 @@ export default function SinglePhotoCapture({
         <View style={styles.permissionBox}>
           <Text style={styles.permissionTitle}>Camera access needed</Text>
           <Text style={styles.permissionBody}>
-            WoodID needs your camera to photograph wood grain.
+            Grainscope needs your camera to photograph wood grain.
           </Text>
           <Pressable style={styles.primaryButton} onPress={requestPermission}>
             <Text style={styles.primaryButtonText}>Enable camera</Text>

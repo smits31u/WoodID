@@ -31,7 +31,8 @@ export default function AboutScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>About</Text>
         <Text style={styles.intro}>
-          WoodID draws on a mix of AI-assisted analysis and reference data from the sources below.
+          Grainscope draws on a mix of AI-assisted analysis and reference data from the sources
+          below.
         </Text>
 
         <Text style={styles.sectionLabel}>Data Sources</Text>

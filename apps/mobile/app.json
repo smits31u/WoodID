@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "WoodID",
-    "slug": "woodid",
+    "name": "Grainscope",
+    "slug": "grainscope",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -27,7 +27,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "WoodID uses your camera to photograph wood grain and identify the species.",
+          "cameraPermission": "Grainscope uses your camera to photograph wood grain and identify the species.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -38,6 +38,13 @@
           "android": {
             "usesCleartextTraffic": true
           }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#18110D",
+          "resizeMode": "contain"
         }
       ]
     ],

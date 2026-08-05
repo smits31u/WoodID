@@ -4,6 +4,7 @@ import type { Species } from '../generated/prisma/client.js';
 import {
   IdentificationError,
   identifySpeciesFromImages,
+  isWoodPhoto,
   parseImageInput,
   type ClaudeIdentification,
   type DensityCategory,
@@ -130,6 +131,20 @@ const speciesRoutes: FastifyPluginAsync = async (fastify) => {
       const rawImages = request.body.images ?? (request.body.image ? [request.body.image] : []);
       const parsedImages = rawImages.map(parseImageInput);
 
+      // Checked before the (expensive) identification call, on the face-grain image only — a
+      // 'no' means the photo doesn't show wood clearly enough to identify. 'unknown' (a transient
+      // check failure) fails open, same philosophy as isWoodPhoto's existing usage in the
+      // contribution routes: don't block a real submission on an ambiguous quality signal.
+      const qualityCheck = await isWoodPhoto(parsedImages[0]);
+      if (qualityCheck === 'no') {
+        return reply.code(422).send({
+          statusCode: 422,
+          error: 'Unprocessable Entity',
+          message: 'The photo does not appear to show a wood surface clearly enough to identify.',
+          code: 'IMAGE_QUALITY_REJECTED',
+        });
+      }
+
       let identification;
       try {
         identification = await identifySpeciesFromImages(parsedImages);
@@ -140,6 +155,7 @@ const speciesRoutes: FastifyPluginAsync = async (fastify) => {
             statusCode: 502,
             error: 'Bad Gateway',
             message: error.message,
+            code: 'AI_SERVICE_ERROR',
           });
         }
         throw error;
