@@ -9,4 +9,5 @@ export type RootStackParamList = {
   SuggestSpecies: { prefillCommonName?: string; prefillScientificName?: string } | undefined;
   About: undefined;
   History: undefined;
+  PrivacyPolicy: undefined;
 };

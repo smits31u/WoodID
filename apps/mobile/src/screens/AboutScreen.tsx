@@ -1,7 +1,11 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'About'>;
 
 interface DataSource {
   name: string;
@@ -25,7 +29,7 @@ const DATA_SOURCES: DataSource[] = [
   },
 ];
 
-export default function AboutScreen() {
+export default function AboutScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -42,6 +46,14 @@ export default function AboutScreen() {
             <Text style={styles.sourceDescription}>{source.description}</Text>
           </View>
         ))}
+
+        <Pressable
+          style={styles.privacyLink}
+          onPress={() => navigation.navigate('PrivacyPolicy')}
+          hitSlop={8}
+        >
+          <Text style={styles.privacyLinkText}>Privacy Policy</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -84,6 +96,16 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: '600',
     color: colors.textPrimary,
+  },
+  privacyLink: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  privacyLinkText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.accent,
   },
   sourceDescription: {
     ...typography.body,
