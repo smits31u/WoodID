@@ -54,6 +54,8 @@ export default function AboutScreen({ navigation }: Props) {
         >
           <Text style={styles.privacyLinkText}>Privacy Policy</Text>
         </Pressable>
+
+        <Text style={styles.poweredBy}>Powered by Old Glory Technologies</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -112,5 +114,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  poweredBy: {
+    fontSize: 11,
+    color: colors.textMuted,
+    opacity: 0.7,
+    textAlign: 'center',
+    marginTop: spacing.lg,
   },
 });

@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { identifySpecies, IdentifyError, type IdentifyResult } from '../api/species';
 import { addHistoryEntry } from './history';
+import { recordIdentification } from './usageStats';
+import { FEEDBACK_PROMPT_LIFETIME_LIMIT } from '../constants/billing';
 import type { CapturedPhoto } from './photo';
 
 const STORAGE_KEY = 'woodid_offline_queue';
@@ -13,6 +15,7 @@ export interface QueueItem {
   queuedAt: string;
   status: 'pending' | 'submitting' | 'done' | 'failed';
   result?: IdentifyResult;
+  showFeedbackPrompt?: boolean;
   errorMessage?: string;
 }
 
@@ -89,8 +92,15 @@ export async function processQueue(): Promise<void> {
       try {
         const result = await identifySpecies(item.photos.map((photo) => photo.base64));
         await addHistoryEntry(result, item.photos);
+        // The photo was already captured while offline, so this is recorded (for quota/feedback
+        // accounting) but never gated — blocking a queued submission after the fact would just
+        // strand the user's photo.
+        const { lifetimeCount } = await recordIdentification();
+        const showFeedbackPrompt = lifetimeCount <= FEEDBACK_PROMPT_LIFETIME_LIMIT;
         queue = await readQueue();
-        queue = queue.map((i) => (i.id === id ? { ...i, status: 'done' as const, result } : i));
+        queue = queue.map((i) =>
+          i.id === id ? { ...i, status: 'done' as const, result, showFeedbackPrompt } : i,
+        );
       } catch (error) {
         queue = await readQueue();
         const stillOffline = error instanceof IdentifyError && error.code === 'NETWORK_ERROR';

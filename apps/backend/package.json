@@ -22,7 +22,8 @@
     "cleanup:junk-species": "tsx scripts/cleanupJunkSpecies.ts",
     "restore:jackalberry": "tsx scripts/restoreJackalberry.ts",
     "import:twdd": "tsx scripts/importTWDD.ts",
-    "enrich:lightweight-species": "tsx scripts/enrichLightweightSpecies.ts"
+    "enrich:lightweight-species": "tsx scripts/enrichLightweightSpecies.ts",
+    "promo:create": "tsx scripts/createPromoCode.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

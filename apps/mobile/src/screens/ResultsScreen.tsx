@@ -5,6 +5,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { getReferencePhotos, type ReferencePhoto } from '../api/species';
 import { API_BASE_URL } from '../constants/api';
+import { canIdentify } from '../lib/usageStats';
+import FeedbackPrompt from '../components/FeedbackPrompt';
 import { colors, getStatusColor } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
 
@@ -21,7 +23,7 @@ const LOW_CONFIDENCE_THRESHOLD = 0.5;
 const ADD_ANGLE_CONFIDENCE_THRESHOLD = 0.7;
 
 export default function ResultsScreen({ route, navigation }: Props) {
-  const { result, photos } = route.params;
+  const { result, photos, showFeedbackPrompt } = route.params;
   const statusColor = getStatusColor(result.sustainabilityStatus);
   const confidencePercent = Math.round(result.confidence * 100);
   const jankaHardnessLabel =
@@ -133,12 +135,20 @@ export default function ResultsScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {showFeedbackPrompt && <FeedbackPrompt result={result} />}
+
         <Pressable
           style={({ pressed }) => [
             styles.scanAgainButton,
             pressed && styles.scanAgainButtonPressed,
           ]}
-          onPress={() => navigation.navigate('Camera')}
+          onPress={async () => {
+            if (await canIdentify()) {
+              navigation.navigate('Camera');
+            } else {
+              navigation.navigate('Upgrade');
+            }
+          }}
         >
           <Text style={styles.scanAgainText}>Scan another sample</Text>
         </Pressable>

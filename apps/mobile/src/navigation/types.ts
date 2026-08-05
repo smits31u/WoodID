@@ -4,10 +4,11 @@ import type { CapturedPhoto } from '../lib/photo';
 export type RootStackParamList = {
   Home: undefined;
   Camera: { existingPhotos: CapturedPhoto[] } | undefined;
-  Results: { result: IdentifyResult; photos: CapturedPhoto[] };
+  Results: { result: IdentifyResult; photos: CapturedPhoto[]; showFeedbackPrompt?: boolean };
   ContributePhoto: undefined;
   SuggestSpecies: { prefillCommonName?: string; prefillScientificName?: string } | undefined;
   About: undefined;
   History: undefined;
   PrivacyPolicy: undefined;
+  Upgrade: undefined;
 };

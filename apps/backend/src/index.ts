@@ -6,6 +6,8 @@ import fastifyFormbody from '@fastify/formbody';
 import speciesRoutes from './routes/species.js';
 import contributionsRoutes from './routes/contributions.js';
 import adminRoutes from './routes/admin.js';
+import promoRoutes from './routes/promo.js';
+import feedbackRoutes from './routes/feedback.js';
 import { UPLOADS_DIR } from './lib/imageStorage.js';
 
 await mkdir(UPLOADS_DIR, { recursive: true });
@@ -51,6 +53,8 @@ server.get('/health', async () => {
 server.register(speciesRoutes);
 server.register(contributionsRoutes);
 server.register(adminRoutes);
+server.register(promoRoutes);
+server.register(feedbackRoutes);
 
 const start = async () => {
   try {

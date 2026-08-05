@@ -14,9 +14,11 @@ import AboutScreen from './src/screens/AboutScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import UpgradeScreen from './src/screens/UpgradeScreen';
 import type { RootStackParamList } from './src/navigation/types';
 import { colors } from './src/theme/colors';
 import { processQueue } from './src/lib/offlineQueue';
+import { configurePurchases } from './src/lib/purchases';
 
 // Must be called at module scope, not inside the component — otherwise it may run too late,
 // after the native splash has already auto-hidden.
@@ -40,6 +42,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    configurePurchases();
     processQueue();
 
     const netInfoUnsubscribe = NetInfo.addEventListener((state) => {
@@ -87,6 +90,11 @@ export default function App() {
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
             <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <Stack.Screen
+              name="Upgrade"
+              component={UpgradeScreen}
+              options={{ presentation: 'modal' }}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       )}

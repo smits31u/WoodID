@@ -83,6 +83,7 @@ export default function SplashScreen({ onFinish }: Props) {
       </View>
       <Text style={styles.appName}>Grainscope</Text>
       <Text style={styles.tagline}>Identify any wood</Text>
+      <Text style={styles.poweredBy}>Powered by Old Glory Technologies</Text>
     </ImageBackground>
   );
 }
@@ -143,5 +144,12 @@ const styles = StyleSheet.create({
     textTransform: 'none',
     color: colors.textMuted,
     letterSpacing: 0.8,
+  },
+  poweredBy: {
+    position: 'absolute',
+    bottom: spacing.xl,
+    fontSize: 11,
+    color: colors.textMuted,
+    opacity: 0.7,
   },
 });

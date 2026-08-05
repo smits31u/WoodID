@@ -1,5 +1,13 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Crypto from 'expo-crypto';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -7,13 +15,15 @@ import type { RootStackParamList } from '../navigation/types';
 import { identifySpecies, IdentifyError, type IdentifyErrorCode } from '../api/species';
 import { addHistoryEntry } from '../lib/history';
 import { enqueue } from '../lib/offlineQueue';
+import { canIdentify, recordIdentification } from '../lib/usageStats';
+import { FEEDBACK_PROMPT_LIFETIME_LIMIT } from '../constants/billing';
 import SinglePhotoCapture, { type HintVariant } from '../components/SinglePhotoCapture';
 import type { CapturedPhoto } from '../lib/photo';
 import { colors } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
-type Stage = 'capture' | 'review' | 'identifying' | 'error' | 'offline-saved';
+type Stage = 'capture' | 'review' | 'identifying' | 'error' | 'offline-saved' | 'limit-reached';
 
 interface CaptureStep {
   key: string;
@@ -169,16 +179,29 @@ export default function CameraScreen({ navigation, route }: Props) {
 
   const currentStep = CAPTURE_STEPS[stepIndex];
   const activeStep: CaptureStep =
-    retakeKey != null ? stepFor(retakeKey) : isBoost ? { key: boostKey, optional: false, ...BOOST_STEP_META } : currentStep;
+    retakeKey != null
+      ? stepFor(retakeKey)
+      : isBoost
+        ? { key: boostKey, optional: false, ...BOOST_STEP_META }
+        : currentStep;
   const showProgress = retakeKey == null && !isBoost;
 
   const runIdentify = useCallback(
     async (collectedPhotos: CapturedPhoto[]) => {
+      if (!(await canIdentify())) {
+        setStage('limit-reached');
+        return;
+      }
       setStage('identifying');
       try {
         const result = await identifySpecies(collectedPhotos.map((photo) => photo.base64));
         await addHistoryEntry(result, collectedPhotos);
-        navigation.replace('Results', { result, photos: collectedPhotos });
+        const { lifetimeCount } = await recordIdentification();
+        navigation.replace('Results', {
+          result,
+          photos: collectedPhotos,
+          showFeedbackPrompt: lifetimeCount <= FEEDBACK_PROMPT_LIFETIME_LIMIT,
+        });
       } catch (error) {
         if (error instanceof IdentifyError && error.code === 'NETWORK_ERROR') {
           await enqueue(collectedPhotos);
@@ -322,6 +345,21 @@ export default function CameraScreen({ navigation, route }: Props) {
           </Text>
           <Pressable style={styles.primaryButton} onPress={() => navigation.popToTop()}>
             <Text style={styles.primaryButtonText}>Back to home</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {stage === 'limit-reached' && (
+        <View style={styles.centerContent}>
+          <Text style={styles.errorTitle}>Daily limit reached</Text>
+          <Text style={styles.errorBody}>
+            You've used today's free identifications. Upgrade to Pro for unlimited access.
+          </Text>
+          <Pressable style={styles.primaryButton} onPress={() => navigation.replace('Upgrade')}>
+            <Text style={styles.primaryButtonText}>Upgrade to Pro</Text>
+          </Pressable>
+          <Pressable style={styles.linkButton} onPress={() => navigation.popToTop()}>
+            <Text style={styles.linkButtonText}>Back to home</Text>
           </Pressable>
         </View>
       )}

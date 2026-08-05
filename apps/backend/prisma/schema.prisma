@@ -114,3 +114,26 @@ model SuggestionPhoto {
 
   imageUrl String
 }
+
+model PromoCode {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+
+  code      String    @unique
+  active    Boolean   @default(true)
+  expiresAt DateTime?
+  note      String?
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  deviceId String
+  rating   Int // 1-5, "Was this identification correct?"
+
+  actualSpecies  String? // optional free text: "What species was it actually?"
+  speciesId      Int? // matched Species.id, when the identification had a DB match
+  commonName     String?
+  scientificName String?
+}

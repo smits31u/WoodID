@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { getQueue, markViewed, type QueueItem } from '../lib/offlineQueue';
+import { canIdentify, getRemainingToday } from '../lib/usageStats';
 import { colors } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
 
@@ -13,10 +14,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [remainingToday, setRemainingToday] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       getQueue().then(setQueue);
+      getRemainingToday().then(setRemainingToday);
     }, []),
   );
 
@@ -31,13 +34,25 @@ export default function HomeScreen({ navigation }: Props) {
       return;
     }
     markViewed(readyItem.id).then(() => setQueue((q) => q.filter((i) => i.id !== readyItem.id)));
-    navigation.navigate('Results', { result: readyItem.result, photos: readyItem.photos });
+    navigation.navigate('Results', {
+      result: readyItem.result,
+      photos: readyItem.photos,
+      showFeedbackPrompt: readyItem.showFeedbackPrompt,
+    });
   };
 
   const handleDismissFailed = () => {
     Promise.all(failedItems.map((item) => markViewed(item.id))).then(() =>
       setQueue((q) => q.filter((item) => item.status !== 'failed')),
     );
+  };
+
+  const handleShutterPress = async () => {
+    if (await canIdentify()) {
+      navigation.navigate('Camera');
+    } else {
+      navigation.navigate('Upgrade');
+    }
   };
 
   return (
@@ -66,15 +81,15 @@ export default function HomeScreen({ navigation }: Props) {
       {!readyItem && failedItems.length > 0 && (
         <Pressable style={styles.queueBannerMuted} onPress={handleDismissFailed}>
           <Text style={styles.queueBannerMutedText}>
-            {failedItems.length} submission{failedItems.length === 1 ? '' : 's'} couldn't complete
-            — tap to dismiss
+            {failedItems.length} submission{failedItems.length === 1 ? '' : 's'} couldn't complete —
+            tap to dismiss
           </Text>
         </Pressable>
       )}
 
       <View style={styles.center}>
         <Pressable
-          onPress={() => navigation.navigate('Camera')}
+          onPress={handleShutterPress}
           hitSlop={16}
           style={({ pressed }) => [styles.shutterRing, pressed && styles.shutterRingPressed]}
         >
@@ -83,6 +98,13 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         </Pressable>
         <Text style={styles.hint}>Tap to identify a wood species</Text>
+        {remainingToday != null && (
+          <Text style={styles.quotaHint}>
+            {remainingToday > 0
+              ? `${remainingToday} free identification${remainingToday === 1 ? '' : 's'} left today`
+              : "You've used today's free identifications"}
+          </Text>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -200,6 +222,11 @@ const styles = StyleSheet.create({
   },
   hint: {
     ...typography.label,
+    color: colors.textMuted,
+  },
+  quotaHint: {
+    ...typography.body,
+    fontSize: 12,
     color: colors.textMuted,
   },
   footer: {
