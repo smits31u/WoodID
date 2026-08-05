@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { identifySpecies, IdentifyError, type IdentifyResult } from '../api/species';
+import { addHistoryEntry } from './history';
 import type { CapturedPhoto } from './photo';
 
 const STORAGE_KEY = 'woodid_offline_queue';
@@ -87,6 +88,7 @@ export async function processQueue(): Promise<void> {
 
       try {
         const result = await identifySpecies(item.photos.map((photo) => photo.base64));
+        await addHistoryEntry(result, item.photos);
         queue = await readQueue();
         queue = queue.map((i) => (i.id === id ? { ...i, status: 'done' as const, result } : i));
       } catch (error) {

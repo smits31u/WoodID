@@ -8,4 +8,5 @@ export type RootStackParamList = {
   ContributePhoto: undefined;
   SuggestSpecies: { prefillCommonName?: string; prefillScientificName?: string } | undefined;
   About: undefined;
+  History: undefined;
 };

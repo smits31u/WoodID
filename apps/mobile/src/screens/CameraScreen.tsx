@@ -5,6 +5,7 @@ import * as Crypto from 'expo-crypto';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { identifySpecies, IdentifyError, type IdentifyErrorCode } from '../api/species';
+import { addHistoryEntry } from '../lib/history';
 import { enqueue } from '../lib/offlineQueue';
 import SinglePhotoCapture, { type HintVariant } from '../components/SinglePhotoCapture';
 import type { CapturedPhoto } from '../lib/photo';
@@ -176,6 +177,7 @@ export default function CameraScreen({ navigation, route }: Props) {
       setStage('identifying');
       try {
         const result = await identifySpecies(collectedPhotos.map((photo) => photo.base64));
+        await addHistoryEntry(result, collectedPhotos);
         navigation.replace('Results', { result, photos: collectedPhotos });
       } catch (error) {
         if (error instanceof IdentifyError && error.code === 'NETWORK_ERROR') {

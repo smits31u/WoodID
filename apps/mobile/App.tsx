@@ -11,6 +11,7 @@ import ResultsScreen from './src/screens/ResultsScreen';
 import ContributePhotoScreen from './src/screens/ContributePhotoScreen';
 import SuggestSpeciesScreen from './src/screens/SuggestSpeciesScreen';
 import AboutScreen from './src/screens/AboutScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import type { RootStackParamList } from './src/navigation/types';
 import { colors } from './src/theme/colors';
@@ -83,6 +84,7 @@ export default function App() {
             <Stack.Screen name="ContributePhoto" component={ContributePhotoScreen} />
             <Stack.Screen name="SuggestSpecies" component={SuggestSpeciesScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="History" component={HistoryScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       )}

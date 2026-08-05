@@ -95,6 +95,10 @@ export default function HomeScreen({ navigation }: Props) {
           <Pressable onPress={() => navigation.navigate('SuggestSpecies')} hitSlop={8}>
             <Text style={styles.contributeLink}>Suggest a species</Text>
           </Pressable>
+          <Text style={styles.contributeDivider}>·</Text>
+          <Pressable onPress={() => navigation.navigate('History')} hitSlop={8}>
+            <Text style={styles.contributeLink}>History</Text>
+          </Pressable>
         </View>
         <Pressable onPress={() => navigation.navigate('About')} hitSlop={8}>
           <Text style={styles.aboutLink}>About / Data Sources</Text>
