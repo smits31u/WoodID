@@ -12,7 +12,9 @@ export const REVENUECAT_API_KEY = Platform.select({
 // Must match the entitlement identifier configured in the RevenueCat dashboard.
 export const PRO_ENTITLEMENT_ID = 'pro';
 
-export const FREE_DAILY_IDENTIFICATION_LIMIT = 5;
+// Enforced server-side (apps/backend/src/lib/usageLimits.ts) — this value is display-only,
+// used for the "X free identifications left today" hint. Keep in sync manually.
+export const FREE_DAILY_IDENTIFICATION_LIMIT = 10;
 export const FEEDBACK_PROMPT_LIFETIME_LIMIT = 5;
 
 export interface ProPlan {

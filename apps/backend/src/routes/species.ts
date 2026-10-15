@@ -9,6 +9,7 @@ import {
   type ClaudeIdentification,
   type DensityCategory,
 } from '../ai/identifySpecies.js';
+import { hasReachedDailyLimit, recordIdentificationUsage } from '../lib/usageLimits.js';
 
 interface SpeciesIdParams {
   id: number;
@@ -17,6 +18,7 @@ interface SpeciesIdParams {
 interface IdentifyBody {
   image?: string;
   images?: string[];
+  deviceId?: string;
 }
 
 const idParamsSchema = {
@@ -32,6 +34,7 @@ const BASE64_IMAGE_PATTERN = '^(data:image\\/[a-zA-Z0-9.+-]+;base64,)?[A-Za-z0-9
 const identifyBodySchema = {
   type: 'object',
   additionalProperties: false,
+  required: ['deviceId'],
   properties: {
     image: {
       type: 'string',
@@ -47,6 +50,10 @@ const identifyBodySchema = {
         minLength: 1,
         pattern: BASE64_IMAGE_PATTERN,
       },
+    },
+    deviceId: {
+      type: 'string',
+      minLength: 1,
     },
   },
   anyOf: [{ required: ['image'] }, { required: ['images'] }],
@@ -128,6 +135,20 @@ const speciesRoutes: FastifyPluginAsync = async (fastify) => {
     '/species/identify',
     { schema: { body: identifyBodySchema } },
     async (request, reply) => {
+      const deviceId = request.body.deviceId!;
+
+      // Checked before any Claude call (both the quality check below and the identification
+      // itself cost real money) — a device that's already used today's quota is turned away
+      // before we spend anything on their request.
+      if (await hasReachedDailyLimit(deviceId)) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: "You've used today's free identifications. Come back tomorrow for more.",
+          code: 'DAILY_LIMIT_REACHED',
+        });
+      }
+
       const rawImages = request.body.images ?? (request.body.image ? [request.body.image] : []);
       const parsedImages = rawImages.map(parseImageInput);
 
@@ -185,6 +206,8 @@ const speciesRoutes: FastifyPluginAsync = async (fastify) => {
                 ? candidate
                 : best,
             );
+
+      await recordIdentificationUsage(deviceId);
 
       if (match) {
         return {

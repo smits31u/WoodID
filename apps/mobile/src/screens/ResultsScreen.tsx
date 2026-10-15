@@ -5,7 +5,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { getReferencePhotos, type ReferencePhoto } from '../api/species';
 import { API_BASE_URL } from '../constants/api';
-import { canIdentify } from '../lib/usageStats';
 import FeedbackPrompt from '../components/FeedbackPrompt';
 import { colors, getStatusColor } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
@@ -142,13 +141,7 @@ export default function ResultsScreen({ route, navigation }: Props) {
             styles.scanAgainButton,
             pressed && styles.scanAgainButtonPressed,
           ]}
-          onPress={async () => {
-            if (await canIdentify()) {
-              navigation.navigate('Camera');
-            } else {
-              navigation.navigate('Upgrade');
-            }
-          }}
+          onPress={() => navigation.navigate('Camera')}
         >
           <Text style={styles.scanAgainText}>Scan another sample</Text>
         </Pressable>

@@ -45,6 +45,7 @@ export type IdentifyErrorCode =
   | 'NETWORK_ERROR'
   | 'IMAGE_QUALITY_REJECTED'
   | 'AI_SERVICE_ERROR'
+  | 'DAILY_LIMIT_REACHED'
   | 'SERVER_ERROR';
 
 export class IdentifyError extends Error {
@@ -57,13 +58,16 @@ export class IdentifyError extends Error {
 }
 export class SpeciesFetchError extends Error {}
 
-export async function identifySpecies(base64Images: string[]): Promise<IdentifyResult> {
+export async function identifySpecies(
+  base64Images: string[],
+  deviceId: string,
+): Promise<IdentifyResult> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}/species/identify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images: base64Images }),
+      body: JSON.stringify({ images: base64Images, deviceId }),
     });
   } catch {
     throw new IdentifyError(
@@ -74,10 +78,12 @@ export async function identifySpecies(base64Images: string[]): Promise<IdentifyR
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    const code: IdentifyErrorCode =
-      body?.code === 'IMAGE_QUALITY_REJECTED' || body?.code === 'AI_SERVICE_ERROR'
-        ? body.code
-        : 'SERVER_ERROR';
+    const KNOWN_CODES: IdentifyErrorCode[] = [
+      'IMAGE_QUALITY_REJECTED',
+      'AI_SERVICE_ERROR',
+      'DAILY_LIMIT_REACHED',
+    ];
+    const code: IdentifyErrorCode = KNOWN_CODES.includes(body?.code) ? body.code : 'SERVER_ERROR';
     throw new IdentifyError(body?.message ?? 'Something went wrong identifying this photo.', code);
   }
 

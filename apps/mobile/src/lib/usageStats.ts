@@ -32,15 +32,12 @@ async function writeStats(stats: UsageStats): Promise<void> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
 }
 
-export async function canIdentify(): Promise<boolean> {
-  if (await isPro()) {
-    return true;
-  }
-  const stats = await readStats();
-  return stats.dailyCount < FREE_DAILY_IDENTIFICATION_LIMIT;
-}
-
-/** Returns null for Pro users — there's no daily cap to display. */
+/**
+ * Local, best-effort mirror of the server's daily count — used only for the "X free
+ * identifications left today" hint. The real limit is enforced server-side, keyed by deviceId
+ * (apps/backend/src/lib/usageLimits.ts); this can drift (e.g. reinstall resets it) without
+ * affecting actual enforcement. Returns null for Pro users — there's no daily cap to display.
+ */
 export async function getRemainingToday(): Promise<number | null> {
   if (await isPro()) {
     return null;

@@ -3,6 +3,7 @@ import * as Crypto from 'expo-crypto';
 import { identifySpecies, IdentifyError, type IdentifyResult } from '../api/species';
 import { addHistoryEntry } from './history';
 import { recordIdentification } from './usageStats';
+import { getDeviceId } from './deviceId';
 import { FEEDBACK_PROMPT_LIFETIME_LIMIT } from '../constants/billing';
 import type { CapturedPhoto } from './photo';
 
@@ -90,11 +91,15 @@ export async function processQueue(): Promise<void> {
       await writeQueue(queue);
 
       try {
-        const result = await identifySpecies(item.photos.map((photo) => photo.base64));
+        const deviceId = await getDeviceId();
+        const result = await identifySpecies(
+          item.photos.map((photo) => photo.base64),
+          deviceId,
+        );
         await addHistoryEntry(result, item.photos);
-        // The photo was already captured while offline, so this is recorded (for quota/feedback
-        // accounting) but never gated — blocking a queued submission after the fact would just
-        // strand the user's photo.
+        // Recorded locally for the feedback-prompt threshold. The server may still reject this
+        // submission with DAILY_LIMIT_REACHED if the device's quota filled up while it was
+        // queued — that falls into the catch below and surfaces as a normal 'failed' item.
         const { lifetimeCount } = await recordIdentification();
         const showFeedbackPrompt = lifetimeCount <= FEEDBACK_PROMPT_LIFETIME_LIMIT;
         queue = await readQueue();

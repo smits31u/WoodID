@@ -15,7 +15,8 @@ import type { RootStackParamList } from '../navigation/types';
 import { identifySpecies, IdentifyError, type IdentifyErrorCode } from '../api/species';
 import { addHistoryEntry } from '../lib/history';
 import { enqueue } from '../lib/offlineQueue';
-import { canIdentify, recordIdentification } from '../lib/usageStats';
+import { getDeviceId } from '../lib/deviceId';
+import { recordIdentification } from '../lib/usageStats';
 import { FEEDBACK_PROMPT_LIFETIME_LIMIT } from '../constants/billing';
 import SinglePhotoCapture, { type HintVariant } from '../components/SinglePhotoCapture';
 import type { CapturedPhoto } from '../lib/photo';
@@ -84,6 +85,12 @@ const ERROR_MESSAGES: Record<IdentifyErrorCode, { title: string; body: string }>
   AI_SERVICE_ERROR: {
     title: 'Identification failed',
     body: 'The identification service is having trouble right now. Please try again in a moment.',
+  },
+  // Not actually reached — runIdentify's catch block routes this code to the 'limit-reached'
+  // stage before falling through here. Included only to satisfy the Record's exhaustiveness.
+  DAILY_LIMIT_REACHED: {
+    title: 'Daily limit reached',
+    body: "You've used today's free identifications. Come back tomorrow for more.",
   },
   SERVER_ERROR: {
     title: 'Something went wrong',
@@ -188,13 +195,13 @@ export default function CameraScreen({ navigation, route }: Props) {
 
   const runIdentify = useCallback(
     async (collectedPhotos: CapturedPhoto[]) => {
-      if (!(await canIdentify())) {
-        setStage('limit-reached');
-        return;
-      }
       setStage('identifying');
       try {
-        const result = await identifySpecies(collectedPhotos.map((photo) => photo.base64));
+        const deviceId = await getDeviceId();
+        const result = await identifySpecies(
+          collectedPhotos.map((photo) => photo.base64),
+          deviceId,
+        );
         await addHistoryEntry(result, collectedPhotos);
         const { lifetimeCount } = await recordIdentification();
         navigation.replace('Results', {
@@ -206,6 +213,10 @@ export default function CameraScreen({ navigation, route }: Props) {
         if (error instanceof IdentifyError && error.code === 'NETWORK_ERROR') {
           await enqueue(collectedPhotos);
           setStage('offline-saved');
+          return;
+        }
+        if (error instanceof IdentifyError && error.code === 'DAILY_LIMIT_REACHED') {
+          setStage('limit-reached');
           return;
         }
         setErrorCode(error instanceof IdentifyError ? error.code : 'SERVER_ERROR');
@@ -353,13 +364,10 @@ export default function CameraScreen({ navigation, route }: Props) {
         <View style={styles.centerContent}>
           <Text style={styles.errorTitle}>Daily limit reached</Text>
           <Text style={styles.errorBody}>
-            You've used today's free identifications. Upgrade to Pro for unlimited access.
+            You've used today's free identifications. Come back tomorrow for more.
           </Text>
-          <Pressable style={styles.primaryButton} onPress={() => navigation.replace('Upgrade')}>
-            <Text style={styles.primaryButtonText}>Upgrade to Pro</Text>
-          </Pressable>
-          <Pressable style={styles.linkButton} onPress={() => navigation.popToTop()}>
-            <Text style={styles.linkButtonText}>Back to home</Text>
+          <Pressable style={styles.primaryButton} onPress={() => navigation.popToTop()}>
+            <Text style={styles.primaryButtonText}>Back to home</Text>
           </Pressable>
         </View>
       )}

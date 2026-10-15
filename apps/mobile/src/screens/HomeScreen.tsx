@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { getQueue, markViewed, type QueueItem } from '../lib/offlineQueue';
-import { canIdentify, getRemainingToday } from '../lib/usageStats';
+import { getRemainingToday } from '../lib/usageStats';
 import { colors } from '../theme/colors';
 import { radii, spacing, typography } from '../theme/spacing';
 
@@ -47,12 +47,8 @@ export default function HomeScreen({ navigation }: Props) {
     );
   };
 
-  const handleShutterPress = async () => {
-    if (await canIdentify()) {
-      navigation.navigate('Camera');
-    } else {
-      navigation.navigate('Upgrade');
-    }
+  const handleShutterPress = () => {
+    navigation.navigate('Camera');
   };
 
   return (

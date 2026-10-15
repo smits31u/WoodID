@@ -125,6 +125,19 @@ model PromoCode {
   note      String?
 }
 
+// Server-side enforcement of the free daily identification limit, keyed by the same deviceId
+// used for reference-photo/species-suggestion attribution. One row per deviceId per UTC day.
+model IdentificationUsage {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  deviceId String
+  date     String // YYYY-MM-DD, UTC
+  count    Int    @default(0)
+
+  @@unique([deviceId, date])
+}
+
 model Feedback {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
