@@ -8,6 +8,7 @@ import contributionsRoutes from './routes/contributions.js';
 import adminRoutes from './routes/admin.js';
 import promoRoutes from './routes/promo.js';
 import feedbackRoutes from './routes/feedback.js';
+import privacyRoutes from './routes/privacy.js';
 import { UPLOADS_DIR } from './lib/imageStorage.js';
 
 await mkdir(UPLOADS_DIR, { recursive: true });
@@ -55,6 +56,7 @@ server.register(contributionsRoutes);
 server.register(adminRoutes);
 server.register(promoRoutes);
 server.register(feedbackRoutes);
+server.register(privacyRoutes);
 
 const start = async () => {
   try {
