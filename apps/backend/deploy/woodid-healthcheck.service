@@ -1,0 +1,7 @@
+[Unit]
+Description=WoodID backend health check
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/woodid-healthcheck
+TimeoutStartSec=60

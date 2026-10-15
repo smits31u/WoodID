@@ -1,0 +1,19 @@
+[Unit]
+Description=WoodID Backend
+Wants=network-online.target
+After=network-online.target docker.service postgresql.service
+
+[Service]
+Type=simple
+User=smits31u
+WorkingDirectory=/home/smits31u/woodid/apps/backend
+EnvironmentFile=/home/smits31u/woodid/apps/backend/.env
+# Runs the compiled build; run deploy.sh after code changes.
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
