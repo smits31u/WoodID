@@ -17,7 +17,9 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "package": "com.smits31u.woodid"
     },
     "web": {
@@ -30,14 +32,6 @@
           "cameraPermission": "Grainscope uses your camera to photograph wood grain and identify the species.",
           "microphonePermission": false,
           "recordAudioAndroid": false
-        }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          }
         }
       ],
       [
@@ -54,6 +48,7 @@
       "eas": {
         "projectId": "236904cc-cd5f-443e-95ed-cdebbfb2a343"
       }
-    }
+    },
+    "owner": "smits31u"
   }
 }
