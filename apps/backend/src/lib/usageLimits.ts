@@ -9,7 +9,25 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD, UTC
 }
 
+/**
+ * Pro devices the server can see: those that redeemed a still-active, unexpired promo code.
+ * RevenueCat subscribers aren't checked here yet — purchases aren't wired up (no API keys in
+ * the mobile app); once they are, verify the entitlement server-side before trusting it.
+ */
+async function hasActivePromo(deviceId: string): Promise<boolean> {
+  const redemption = await prisma.promoRedemption.findFirst({
+    where: {
+      deviceId,
+      promoCode: { active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+    },
+  });
+  return redemption !== null;
+}
+
 export async function hasReachedDailyLimit(deviceId: string): Promise<boolean> {
+  if (await hasActivePromo(deviceId)) {
+    return false;
+  }
   const usage = await prisma.identificationUsage.findUnique({
     where: { deviceId_date: { deviceId, date: todayKey() } },
   });

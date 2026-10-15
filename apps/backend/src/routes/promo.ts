@@ -31,6 +31,14 @@ const promoRoutes: FastifyPluginAsync = async (fastify) => {
         return { valid: false, message: 'That code has expired.' };
       }
 
+      // Recorded so the server exempts this device from the daily identification limit.
+      const deviceId = request.body.deviceId!;
+      await prisma.promoRedemption.upsert({
+        where: { deviceId_promoCodeId: { deviceId, promoCodeId: promoCode.id } },
+        create: { deviceId, promoCodeId: promoCode.id },
+        update: {},
+      });
+
       return { valid: true };
     },
   );

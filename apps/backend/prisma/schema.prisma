@@ -123,6 +123,22 @@ model PromoCode {
   active    Boolean   @default(true)
   expiresAt DateTime?
   note      String?
+
+  redemptions PromoRedemption[]
+}
+
+// Devices that redeemed a promo code. The daily identification limit is skipped for these while
+// the code stays active and unexpired, so deactivating a code also ends its devices' exemption.
+model PromoRedemption {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  deviceId    String
+  promoCodeId Int
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id])
+
+  @@unique([deviceId, promoCodeId])
+  @@index([deviceId])
 }
 
 // Server-side enforcement of the free daily identification limit, keyed by the same deviceId

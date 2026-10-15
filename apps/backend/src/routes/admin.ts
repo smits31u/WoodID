@@ -3,6 +3,7 @@ import { prisma } from '../db/client.js';
 import { ContentStatus } from '../generated/prisma/client.js';
 import { fetchWoodProperties, DENSITY_KG_M3_TO_G_CM3 } from '../ai/woodProperties.js';
 import { renderReferencePhotosPage, renderSpeciesSuggestionsPage } from '../admin/render.js';
+import { requireAdmin } from '../lib/adminAuth.js';
 
 interface StatusQuery {
   status?: string;
@@ -33,6 +34,9 @@ function resolveStatus(raw: string | undefined): ContentStatus {
 }
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
+  // Scoped to this plugin, so it guards every /admin route and nothing else.
+  fastify.addHook('onRequest', requireAdmin);
+
   fastify.get<{ Querystring: StatusQuery }>('/admin/reference-photos', async (request, reply) => {
     const status = resolveStatus(request.query.status);
     const photos = await prisma.referencePhoto.findMany({
